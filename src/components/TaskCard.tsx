@@ -1,5 +1,6 @@
 import { List, Trash2, Star } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { getTaskBackgroundColor } from '@/utils/colorUtils';
 import type { Task } from '@/types';
 import { useTaskStore } from '@/store/useTaskStore';
 import ConfirmDialog from './ConfirmDialog';
@@ -25,6 +26,7 @@ export default function TaskCard({ task, onClick, isDeleting }: TaskCardProps) {
   const { markTaskDeleting, toggleImportant } = useTaskStore();
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const bgColor = getTaskBackgroundColor(task.hue, task.progress);
   const preview = useMemo(() => getContentPreview(task), [task]);
 
   return (
@@ -32,6 +34,7 @@ export default function TaskCard({ task, onClick, isDeleting }: TaskCardProps) {
       <div
         className={`group relative w-full h-full rounded-2xl cursor-pointer overflow-hidden hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-none card-frosted ${isDeleting ? 'animate-card-exit' : ''}`}
         style={{
+          backgroundColor: bgColor,
           boxShadow: task.isImportant
             ? '0 0 0 2px rgba(223,183,64,0.35), 4px 4px 16px rgba(62,58,54,0.07)'
             : '4px 4px 12px rgba(62,58,54,0.04)',
@@ -42,6 +45,8 @@ export default function TaskCard({ task, onClick, isDeleting }: TaskCardProps) {
           onClick();
         }}
       >
+        <div className="card-frosted-overlay" />
+
         <button
           onClick={(e) => { e.stopPropagation(); setShowConfirm(true); }}
           className="absolute top-3 right-3 p-1 rounded-lg opacity-0 group-hover:opacity-100 text-canvas-muted/50 hover:text-red-400 hover:bg-red-50/60 transition-all duration-200 z-10"
@@ -51,7 +56,7 @@ export default function TaskCard({ task, onClick, isDeleting }: TaskCardProps) {
           <Trash2 size={14} />
         </button>
 
-        <div className="p-4 flex flex-col h-full">
+        <div className="relative p-4 flex flex-col h-full">
           <div className="flex items-start gap-1.5 min-w-0 w-full">
             <button
               onClick={(e) => { e.stopPropagation(); toggleImportant(task.id); }}
