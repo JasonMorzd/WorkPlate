@@ -4,7 +4,7 @@ import { useTaskStore } from '@/store/useTaskStore';
 import ConfirmDialog from './ConfirmDialog';
 
 export default function Header() {
-  const { tasks, addTask, removeTasks } = useTaskStore();
+  const { tasks, addTask, removeTasks, setExpandedTask } = useTaskStore();
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBatchConfirm, setShowBatchConfirm] = useState(false);
@@ -86,7 +86,11 @@ export default function Header() {
         <div className="flex items-center gap-2">
           {!batchMode && (
             <button
-              onClick={addTask}
+              onClick={async (e) => {
+                e.stopPropagation();
+                const id = await addTask();
+                if (id) setExpandedTask(id);
+              }}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-normal text-canvas-ink bg-citrine-200/80 hover:bg-citrine-300/80 transition-all duration-300"
             >
               <Plus size={15} /> 新建

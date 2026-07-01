@@ -7,7 +7,7 @@ interface TaskStore {
   expandedTaskId: string | null;
   deletingTaskIds: Set<string>;
   loading: boolean;
-  addTask: () => void;
+  addTask: () => Promise<string | null>;
   updateTask: (id: string, updates: Partial<Task>) => void;
   toggleImportant: (id: string) => void;
   markTaskDeleting: (id: string) => void;
@@ -34,7 +34,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   addTask: async () => {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
-    if (!userId) return;
+    if (!userId) return null;
 
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -62,6 +62,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     });
 
     set((state) => ({ tasks: [...state.tasks, newTask] }));
+    return newTask.id;
   },
 
   updateTask: async (id, updates) => {
