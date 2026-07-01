@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import type { Task } from '@/types';
-import { loadTasks, saveTasks } from '@/utils/storageUtils';
+import { supabase } from '@/lib/supabase';
 
 interface TaskStore {
   tasks: Task[];
   expandedTaskId: string | null;
   deletingTaskIds: Set<string>;
+  loading: boolean;
   addTask: () => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   toggleImportant: (id: string) => void;
@@ -13,7 +14,8 @@ interface TaskStore {
   removeTasks: (ids: string[]) => void;
   setExpandedTask: (id: string | null) => void;
   togglePin: (id: string) => void;
-  initializeDemoData: () => void;
+  loadTasks: () => Promise<void>;
+  subscribeToChanges: () => () => void;
 }
 
 let taskCounter = 0;
@@ -23,38 +25,62 @@ function generateId(): string {
   return `task-${Date.now()}-${taskCounter}`;
 }
 
-export const useTaskStore = create<TaskStore>((set) => ({
+export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
   expandedTaskId: null,
   deletingTaskIds: new Set(),
+  loading: true,
 
-  addTask: () => {
-    set((state) => {
-      const newTask: Task = {
-        id: generateId(),
-        title: '新任务',
-        importance: 50,
-        isImportant: false,
-        progress: 0,
-        hue: Math.floor(Math.random() * 360),
-        content: { type: 'text', text: '' },
-        isPinned: false,
-        createdAt: Date.now(),
-      };
-      const tasks = [...state.tasks, newTask];
-      saveTasks(tasks);
-      return { tasks };
+  addTask: async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return;
+
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      title: '新任务',
+      importance: 50,
+      isImportant: false,
+      progress: 0,
+      hue: Math.floor(Math.random() * 360),
+      content: { type: 'text', text: '' },
+      isPinned: false,
+      createdAt: Date.now(),
+    };
+
+    await supabase.from('tasks').insert({
+      id: newTask.id,
+      user_id: userId,
+      title: newTask.title,
+      importance: newTask.importance,
+      is_important: newTask.isImportant,
+      progress: newTask.progress,
+      hue: newTask.hue,
+      content: newTask.content,
+      is_pinned: newTask.isPinned,
+      created_at: newTask.createdAt,
     });
+
+    set((state) => ({ tasks: [...state.tasks, newTask] }));
   },
 
-  updateTask: (id, updates) => {
-    set((state) => {
-      const tasks = state.tasks.map((t) =>
-        t.id === id ? { ...t, ...updates } : t
-      );
-      saveTasks(tasks);
-      return { tasks };
-    });
+  updateTask: async (id, updates) => {
+    const dbUpdates: Record<string, any> = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.importance !== undefined) dbUpdates.importance = updates.importance;
+    if (updates.isImportant !== undefined) dbUpdates.is_important = updates.isImportant;
+    if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
+    if (updates.hue !== undefined) dbUpdates.hue = updates.hue;
+    if (updates.content !== undefined) dbUpdates.content = updates.content;
+    if (updates.isPinned !== undefined) dbUpdates.is_pinned = updates.isPinned;
+
+    if (Object.keys(dbUpdates).length > 0) {
+      await supabase.from('tasks').update(dbUpdates).eq('id', id);
+    }
+
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+    }));
   },
 
   toggleImportant: (id) => {
@@ -62,7 +88,10 @@ export const useTaskStore = create<TaskStore>((set) => ({
       const tasks = state.tasks.map((t) =>
         t.id === id ? { ...t, isImportant: !t.isImportant } : t
       );
-      saveTasks(tasks);
+      const updated = tasks.find((t) => t.id === id);
+      if (updated) {
+        supabase.from('tasks').update({ is_important: updated.isImportant }).eq('id', id);
+      }
       return { tasks };
     });
   },
@@ -74,12 +103,12 @@ export const useTaskStore = create<TaskStore>((set) => ({
       return { deletingTaskIds: next };
     });
 
-    setTimeout(() => {
+    setTimeout(async () => {
+      await supabase.from('tasks').delete().eq('id', id);
       set((state) => {
         const tasks = state.tasks.filter((t) => t.id !== id);
         const next = new Set(state.deletingTaskIds);
         next.delete(id);
-        saveTasks(tasks);
         return {
           tasks,
           deletingTaskIds: next,
@@ -89,13 +118,12 @@ export const useTaskStore = create<TaskStore>((set) => ({
     }, 420);
   },
 
-  removeTasks: (ids) => {
+  removeTasks: async (ids) => {
+    await supabase.from('tasks').delete().in('id', ids);
     set((state) => {
       const idSet = new Set(ids);
-      const tasks = state.tasks.filter((t) => !idSet.has(t.id));
-      saveTasks(tasks);
       return {
-        tasks,
+        tasks: state.tasks.filter((t) => !idSet.has(t.id)),
         expandedTaskId: state.expandedTaskId && idSet.has(state.expandedTaskId) ? null : state.expandedTaskId,
       };
     });
@@ -110,67 +138,56 @@ export const useTaskStore = create<TaskStore>((set) => ({
       const tasks = state.tasks.map((t) =>
         t.id === id ? { ...t, isPinned: !t.isPinned } : t
       );
-      saveTasks(tasks);
+      const updated = tasks.find((t) => t.id === id);
+      if (updated) {
+        supabase.from('tasks').update({ is_pinned: updated.isPinned }).eq('id', id);
+      }
       return { tasks };
     });
   },
 
-  initializeDemoData: () => {
-    const saved = loadTasks();
-    if (saved.length > 0) {
-      set({ tasks: saved });
+  loadTasks: async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) {
+      set({ loading: false });
       return;
     }
 
-    const now = Date.now();
-    const demos: Task[] = [
-      {
-        id: generateId(),
-        title: '重要项目规划',
-        importance: 80,
-        isImportant: true,
-        progress: 30,
-        hue: 200,
-        content: { type: 'text', text: '制定季度项目规划，包括里程碑和时间节点。' },
-        isPinned: true,
-        createdAt: now + 1000,
-      },
-      {
-        id: generateId(),
-        title: '学习新技能',
-        importance: 60,
-        isImportant: true,
-        progress: -1,
-        hue: 320,
-        content: { type: 'form', fields: [{ id: 'f1', label: '学习目标', value: 'React 高级模式', type: 'text' }, { id: 'f2', label: '截止日期', value: '2026-08-30', type: 'text' }] },
-        isPinned: false,
-        createdAt: now + 500,
-      },
-      {
-        id: generateId(),
-        title: '周报整理',
-        importance: 40,
-        isImportant: false,
-        progress: 101,
-        hue: 120,
-        content: { type: 'text', text: '上周工作周报已完成提交。' },
-        isPinned: false,
-        createdAt: now + 300,
-      },
-      {
-        id: generateId(),
-        title: '健身计划',
-        importance: 30,
-        isImportant: false,
-        progress: 60,
-        hue: 30,
-        content: { type: 'text', text: '每周三次有氧运动，两次力量训练。' },
-        isPinned: false,
-        createdAt: now,
-      },
-    ];
+    const { data } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-    set({ tasks: demos });
-    saveTasks(demos);
+    if (data) {
+      const tasks: Task[] = data.map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        importance: row.importance,
+        isImportant: row.is_important,
+        progress: row.progress,
+        hue: row.hue,
+        content: row.content,
+        isPinned: row.is_pinned,
+        createdAt: row.created_at,
+      }));
+      set({ tasks, loading: false });
+    } else {
+      set({ loading: false });
+    }
+  },
+
+  subscribeToChanges: () => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+        get().loadTasks();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   },
 }));
