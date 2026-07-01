@@ -10,6 +10,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +39,17 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-      if (err) throw err;
+      if (isRegister) {
+        const { error: err } = await supabase.auth.signUp({ email, password });
+        if (err) throw err;
+        setError('注册成功！请返回免密码登录或直接登录。');
+        setIsRegister(false);
+      } else {
+        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+        if (err) throw err;
+      }
     } catch (err: any) {
-      setError(err.message || '登录失败');
+      setError(err.message || '操作失败');
     } finally {
       setLoading(false);
     }
@@ -98,7 +106,9 @@ export default function AuthPage() {
             </div>
 
             {error && (
-              <p className="text-xs text-red-400 tracking-wide">{error}</p>
+              <p className={`text-xs tracking-wide ${error.includes('成功') ? 'text-citrine-500' : 'text-red-400'}`}>
+                {error}
+              </p>
             )}
 
             <button
@@ -126,7 +136,7 @@ export default function AuthPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="密码"
+                placeholder="密码（6位以上）"
                 required
                 minLength={6}
                 className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
@@ -134,7 +144,9 @@ export default function AuthPage() {
             </div>
 
             {error && (
-              <p className="text-xs text-red-400 tracking-wide">{error}</p>
+              <p className={`text-xs tracking-wide ${error.includes('成功') ? 'text-citrine-500' : 'text-red-400'}`}>
+                {error}
+              </p>
             )}
 
             <button
@@ -142,7 +154,7 @@ export default function AuthPage() {
               disabled={loading}
               className="w-full py-3 rounded-xl text-sm text-canvas-ink bg-citrine-200/80 hover:bg-citrine-300/80 transition-all duration-300 disabled:opacity-50 tracking-wide"
             >
-              {loading ? '登录中...' : '登录'}
+              {loading ? '处理中...' : isRegister ? '注册' : '登录'}
             </button>
           </form>
         )}
@@ -162,12 +174,20 @@ export default function AuthPage() {
               <KeyRound size={12} /> 使用密码登录
             </button>
           ) : (
-            <button
-              onClick={() => { setMode('magic'); setError(''); }}
-              className="flex items-center gap-1 mx-auto hover:text-citrine-400 transition-colors"
-            >
-              <Mail size={12} /> 免密码登录
-            </button>
+            <>
+              <button
+                onClick={() => { setMode('magic'); setError(''); }}
+                className="flex items-center gap-1 mx-auto hover:text-citrine-400 transition-colors"
+              >
+                <Mail size={12} /> 免密码登录
+              </button>
+              <button
+                onClick={() => { setIsRegister(!isRegister); setError(''); }}
+                className="mt-3 block mx-auto text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+              >
+                {isRegister ? '已有账号？去登录' : '没有账号？去注册'}
+              </button>
+            </>
           )}
         </p>
       </div>
