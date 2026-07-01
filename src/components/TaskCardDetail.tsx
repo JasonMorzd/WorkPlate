@@ -27,8 +27,8 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
             <input
               value={task.title}
               onChange={(e) => updateTask(task.id, { title: e.target.value })}
-              className="flex-1 text-xl font-normal bg-transparent text-canvas-ink outline-none placeholder:text-canvas-muted/35 tracking-wide"
-              placeholder="任务标题"
+              className="flex-1 text-xl font-normal bg-canvas-warm/40 text-canvas-ink outline-none placeholder:text-canvas-muted/30 tracking-wide rounded-lg px-3 py-2 border border-canvas-mid/30 focus:bg-white focus:border-citrine-400 focus:shadow-sm transition-all"
+              placeholder="输入任务标题..."
               onClick={(e) => e.stopPropagation()}
             />
             <div className="flex items-center gap-1 shrink-0">

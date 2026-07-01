@@ -2,6 +2,39 @@ import { create } from 'zustand';
 import type { Task } from '@/types';
 import { supabase } from '@/lib/supabase';
 
+interface PendingUpdate {
+  timer: ReturnType<typeof setTimeout> | null;
+  fields: Record<string, any>;
+}
+
+const pendingSync = new Map<string, PendingUpdate>();
+
+function debounceSync(id: string, fields: Record<string, any>) {
+  const existing = pendingSync.get(id);
+  if (existing?.timer) clearTimeout(existing.timer);
+
+  const merged = { ...(existing?.fields || {}), ...fields };
+
+  const timer = setTimeout(async () => {
+    await supabase.from('tasks').update(merged).eq('id', id);
+    pendingSync.delete(id);
+  }, 800);
+
+  pendingSync.set(id, { timer, fields: merged });
+}
+
+function toDbFields(updates: Partial<Task>): Record<string, any> {
+  const db: Record<string, any> = {};
+  if (updates.title !== undefined) db.title = updates.title;
+  if (updates.importance !== undefined) db.importance = updates.importance;
+  if (updates.isImportant !== undefined) db.is_important = updates.isImportant;
+  if (updates.progress !== undefined) db.progress = updates.progress;
+  if (updates.hue !== undefined) db.hue = updates.hue;
+  if (updates.content !== undefined) db.content = updates.content;
+  if (updates.isPinned !== undefined) db.is_pinned = updates.isPinned;
+  return db;
+}
+
 interface TaskStore {
   tasks: Task[];
   expandedTaskId: string | null;
@@ -16,13 +49,6 @@ interface TaskStore {
   togglePin: (id: string) => void;
   loadTasks: () => Promise<void>;
   subscribeToChanges: () => () => void;
-}
-
-let taskCounter = 0;
-
-function generateId(): string {
-  taskCounter++;
-  return `task-${Date.now()}-${taskCounter}`;
 }
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
@@ -65,18 +91,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     return newTask.id;
   },
 
-  updateTask: async (id, updates) => {
-    const dbUpdates: Record<string, any> = {};
-    if (updates.title !== undefined) dbUpdates.title = updates.title;
-    if (updates.importance !== undefined) dbUpdates.importance = updates.importance;
-    if (updates.isImportant !== undefined) dbUpdates.is_important = updates.isImportant;
-    if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
-    if (updates.hue !== undefined) dbUpdates.hue = updates.hue;
-    if (updates.content !== undefined) dbUpdates.content = updates.content;
-    if (updates.isPinned !== undefined) dbUpdates.is_pinned = updates.isPinned;
-
-    if (Object.keys(dbUpdates).length > 0) {
-      await supabase.from('tasks').update(dbUpdates).eq('id', id);
+  updateTask: (id, updates) => {
+    const dbFields = toDbFields(updates);
+    if (Object.keys(dbFields).length > 0) {
+      debounceSync(id, dbFields);
     }
 
     set((state) => ({
@@ -98,6 +116,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   markTaskDeleting: (id) => {
+    const existing = pendingSync.get(id);
+    if (existing?.timer) {
+      clearTimeout(existing.timer);
+      pendingSync.delete(id);
+    }
+
     set((state) => {
       const next = new Set(state.deletingTaskIds);
       next.add(id);
@@ -120,6 +144,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   removeTasks: async (ids) => {
+    for (const id of ids) {
+      const existing = pendingSync.get(id);
+      if (existing?.timer) {
+        clearTimeout(existing.timer);
+        pendingSync.delete(id);
+      }
+    }
     await supabase.from('tasks').delete().in('id', ids);
     set((state) => {
       const idSet = new Set(ids);
