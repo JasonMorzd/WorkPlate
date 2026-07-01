@@ -1,6 +1,5 @@
 import { List, Trash2, Star } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { getTaskBackgroundColor } from '@/utils/colorUtils';
 import type { Task } from '@/types';
 import { useTaskStore } from '@/store/useTaskStore';
 import ConfirmDialog from './ConfirmDialog';
@@ -26,19 +25,17 @@ export default function TaskCard({ task, onClick, isDeleting }: TaskCardProps) {
   const { markTaskDeleting, toggleImportant } = useTaskStore();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const bgColor = getTaskBackgroundColor(task.hue, task.progress);
   const preview = useMemo(() => getContentPreview(task), [task]);
 
   return (
     <>
       <div
-        className={`group relative w-full h-full rounded-2xl cursor-pointer overflow-hidden hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-none ${isDeleting ? 'animate-card-exit' : ''}`}
+        className={`group relative w-full h-full rounded-2xl cursor-pointer overflow-hidden hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-none card-frosted ${isDeleting ? 'animate-card-exit' : ''}`}
         style={{
-          backgroundColor: bgColor,
           boxShadow: task.isImportant
             ? '0 0 0 2px rgba(223,183,64,0.35), 4px 4px 16px rgba(62,58,54,0.07)'
             : '4px 4px 12px rgba(62,58,54,0.04)',
-          transition: 'transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.35s ease-out, background-color 0.5s ease-out',
+          transition: 'transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.35s ease-out',
         }}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest('[data-action]')) return;
@@ -91,7 +88,7 @@ export default function TaskCard({ task, onClick, isDeleting }: TaskCardProps) {
                   style={{
                     width: `${task.progress}%`,
                     backgroundColor: task.progress >= 80 ? '#C8A32F' : '#D5D0C9',
-                    transition: 'width 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), background-color 0.5s ease-out',
+                    transition: 'width 0.15s ease-out, background-color 0.3s ease-out',
                   }}
                 />
               </div>
