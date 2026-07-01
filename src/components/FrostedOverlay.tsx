@@ -11,12 +11,12 @@ export default function FrostedOverlay() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+      className="fixed inset-0 z-50 flex items-end max-md:items-end md:items-center justify-center max-md:p-0 md:p-4"
       onClick={() => setExpandedTask(null)}
     >
       <div className="absolute inset-0 bg-canvas/85 luminous-overlay" />
       <div
-        className="relative z-10 animate-in"
+        className="relative z-10 max-md:w-full md:animate-in animate-slide-up max-md:rounded-t-2xl max-md:overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <TaskCardDetail task={task} onClose={() => setExpandedTask(null)} />

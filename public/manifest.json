@@ -1,0 +1,16 @@
+{
+  "name": "工作看板",
+  "short_name": "看板",
+  "description": "云端同步的个人任务看板",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBFAF7",
+  "theme_color": "#FBFAF7",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

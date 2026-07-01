@@ -128,9 +128,9 @@ export default function TaskGrid() {
   const layoutMap = new Map(layout.map((l) => [l.id, l]));
 
   return (
-    <div className="flex-1 p-4 overflow-auto min-h-0">
+    <div className="flex-1 max-md:p-2 max-md:pt-0 p-4 overflow-auto min-h-0 card-scroll">
       <div
-        className="grid gap-4 w-full min-h-full"
+        className="grid gap-4 max-md:gap-2.5 w-full min-h-full auto-rows-fr"
         style={{
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gridTemplateRows: `repeat(${maxRow}, 1fr)`,
