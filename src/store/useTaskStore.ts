@@ -9,6 +9,12 @@ interface PendingUpdate {
 
 const pendingSync = new Map<string, PendingUpdate>();
 
+let dirtyUntil = 0;
+
+function markDirty() {
+  dirtyUntil = Date.now() + 3000;
+}
+
 function debounceSync(id: string, fields: Record<string, any>) {
   const existing = pendingSync.get(id);
   if (existing?.timer) clearTimeout(existing.timer);
@@ -16,6 +22,7 @@ function debounceSync(id: string, fields: Record<string, any>) {
   const merged = { ...(existing?.fields || {}), ...fields };
 
   const timer = setTimeout(async () => {
+    markDirty();
     await supabase.from('tasks').update(merged).eq('id', id);
     pendingSync.delete(id);
   }, 800);
@@ -33,6 +40,22 @@ function toDbFields(updates: Partial<Task>): Record<string, any> {
   if (updates.content !== undefined) db.content = updates.content;
   if (updates.isPinned !== undefined) db.is_pinned = updates.isPinned;
   return db;
+}
+
+function tasksEqual(a: Task[], b: Task[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].id !== b[i].id) return false;
+    if (a[i].title !== b[i].title) return false;
+    if (a[i].importance !== b[i].importance) return false;
+    if (a[i].isImportant !== b[i].isImportant) return false;
+    if (a[i].progress !== b[i].progress) return false;
+    if (a[i].hue !== b[i].hue) return false;
+    if (a[i].isPinned !== b[i].isPinned) return false;
+    if (a[i].createdAt !== b[i].createdAt) return false;
+    if (JSON.stringify(a[i].content) !== JSON.stringify(b[i].content)) return false;
+  }
+  return true;
 }
 
 interface TaskStore {
@@ -74,6 +97,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       createdAt: Date.now(),
     };
 
+    markDirty();
+
     await supabase.from('tasks').insert({
       id: newTask.id,
       user_id: userId,
@@ -92,6 +117,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   updateTask: (id, updates) => {
+    markDirty();
+
     const dbFields = toDbFields(updates);
     if (Object.keys(dbFields).length > 0) {
       debounceSync(id, dbFields);
@@ -103,6 +130,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   toggleImportant: (id) => {
+    markDirty();
     set((state) => {
       const tasks = state.tasks.map((t) =>
         t.id === id ? { ...t, isImportant: !t.isImportant } : t
@@ -129,6 +157,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     });
 
     setTimeout(async () => {
+      markDirty();
       await supabase.from('tasks').delete().eq('id', id);
       set((state) => {
         const tasks = state.tasks.filter((t) => t.id !== id);
@@ -151,6 +180,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         pendingSync.delete(id);
       }
     }
+    markDirty();
     await supabase.from('tasks').delete().in('id', ids);
     set((state) => {
       const idSet = new Set(ids);
@@ -166,6 +196,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   togglePin: (id) => {
+    markDirty();
     set((state) => {
       const tasks = state.tasks.map((t) =>
         t.id === id ? { ...t, isPinned: !t.isPinned } : t
@@ -204,36 +235,27 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         isPinned: row.is_pinned,
         createdAt: row.created_at,
       }));
-      set({ tasks, loading: false });
+
+      const current = get().tasks;
+      if (!tasksEqual(current, tasks)) {
+        set({ tasks, loading: false });
+      } else {
+        set({ loading: false });
+      }
     } else {
       set({ loading: false });
     }
   },
 
   subscribeToChanges: () => {
-    let syncing = false;
-
-    const delayReload = () => {
-      syncing = true;
-      setTimeout(() => {
-        syncing = false;
-        get().loadTasks();
-      }, 1200);
-    };
-
     const channel = supabase
       .channel('tasks-changes')
       .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'tasks' },
-        () => { if (!syncing) get().loadTasks(); }
-      )
-      .on('postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'tasks' },
-        () => { if (!syncing) get().loadTasks(); }
-      )
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'tasks' },
-        () => { delayReload(); }
+        { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          if (Date.now() < dirtyUntil) return;
+          get().loadTasks();
+        }
       )
       .subscribe();
 
