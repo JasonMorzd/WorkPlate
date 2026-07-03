@@ -22,7 +22,10 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showSetPassword, setShowSetPassword] = useState(false);
-  const { loadTasks, subscribeToChanges } = useTaskStore();
+  const { loadTasks, subscribeToChanges, tasks } = useTaskStore();
+
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,6 +73,28 @@ export default function App() {
     useTaskStore.setState({ tasks: [] });
   };
 
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedIds.size === tasks.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(tasks.map((t) => t.id)));
+    }
+  }, [selectedIds.size, tasks]);
+
+  const handleCancelBatch = useCallback(() => {
+    setBatchMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
   if (authLoading && !showSetPassword) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-canvas">
@@ -105,9 +130,19 @@ export default function App() {
             </button>
           </div>
         </div>
-        <Header />
-        <TaskGrid />
-        <FrostedOverlay />
+        <Header
+          batchMode={batchMode}
+          selectedIds={selectedIds}
+          onEnterBatch={() => setBatchMode(true)}
+          onSelectAll={handleSelectAll}
+          onCancelBatch={handleCancelBatch}
+        />
+        <TaskGrid
+          batchMode={batchMode}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+        />
+        <FrostedOverlay batchMode={batchMode} />
       </div>
     </AuthContext.Provider>
   );

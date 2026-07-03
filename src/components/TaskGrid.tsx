@@ -105,7 +105,13 @@ function determineCols(taskCount: number, importantCount: number): number {
   return importantCount > 3 ? 6 : 5;
 }
 
-export default function TaskGrid() {
+interface TaskGridProps {
+  batchMode: boolean;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+}
+
+export default function TaskGrid({ batchMode, selectedIds, onToggleSelect }: TaskGridProps) {
   const { tasks, deletingTaskIds, setExpandedTask } = useTaskStore();
   const sorted = sortTasks(tasks);
 
@@ -139,6 +145,7 @@ export default function TaskGrid() {
         {sorted.map((task) => {
           const l = layoutMap.get(task.id);
           const isDeleting = deletingTaskIds.has(task.id);
+          const isSelected = selectedIds.has(task.id);
           return (
             <div
               key={task.id}
@@ -152,7 +159,10 @@ export default function TaskGrid() {
               <TaskCard
                 task={task}
                 isDeleting={isDeleting}
+                batchMode={batchMode}
+                isSelected={isSelected}
                 onClick={() => setExpandedTask(task.id)}
+                onToggleSelect={() => onToggleSelect(task.id)}
               />
             </div>
           );

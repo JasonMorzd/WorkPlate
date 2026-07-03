@@ -1,10 +1,14 @@
 import { useTaskStore } from '@/store/useTaskStore';
 import TaskCardDetail from './TaskCardDetail';
 
-export default function FrostedOverlay() {
+interface FrostedOverlayProps {
+  batchMode?: boolean;
+}
+
+export default function FrostedOverlay({ batchMode }: FrostedOverlayProps) {
   const { expandedTaskId, tasks, setExpandedTask } = useTaskStore();
 
-  if (!expandedTaskId) return null;
+  if (!expandedTaskId || batchMode) return null;
 
   const task = tasks.find((t) => t.id === expandedTaskId);
   if (!task) return null;

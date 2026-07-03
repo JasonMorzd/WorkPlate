@@ -3,42 +3,22 @@ import { useState } from 'react';
 import { useTaskStore } from '@/store/useTaskStore';
 import ConfirmDialog from './ConfirmDialog';
 
-export default function Header() {
-  const { tasks, addTask, removeTasks, setExpandedTask } = useTaskStore();
-  const [batchMode, setBatchMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showBatchConfirm, setShowBatchConfirm] = useState(false);
+interface HeaderProps {
+  batchMode: boolean;
+  selectedIds: Set<string>;
+  onEnterBatch: () => void;
+  onSelectAll: () => void;
+  onCancelBatch: () => void;
+}
 
-  const handleToggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
+export default function Header({ batchMode, selectedIds, onEnterBatch, onSelectAll, onCancelBatch }: HeaderProps) {
+  const { tasks, addTask, removeTasks, setExpandedTask } = useTaskStore();
+  const [showBatchConfirm, setShowBatchConfirm] = useState(false);
 
   const handleBatchDelete = () => {
     removeTasks([...selectedIds]);
-    setSelectedIds(new Set());
-    setBatchMode(false);
     setShowBatchConfirm(false);
-  };
-
-  const handleCancelBatch = () => {
-    setBatchMode(false);
-    setSelectedIds(new Set());
-  };
-
-  const handleSelectAll = () => {
-    if (selectedIds.size === tasks.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(tasks.map((t) => t.id)));
-    }
+    onCancelBatch();
   };
 
   return (
@@ -54,7 +34,7 @@ export default function Header() {
           {batchMode ? (
             <div className="flex items-center gap-1 md:gap-1.5">
               <button
-                onClick={handleSelectAll}
+                onClick={onSelectAll}
                 className="flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs text-canvas-muted/70 bg-canvas-warm/50 hover:bg-canvas-warm/80 transition-colors"
               >
                 {selectedIds.size === tasks.length ? <CheckSquare size={12} /> : <Square size={12} />}
@@ -68,7 +48,7 @@ export default function Header() {
                 <Trash2 size={12} /> 删除选中
               </button>
               <button
-                onClick={handleCancelBatch}
+                onClick={onCancelBatch}
                 className="p-1 md:p-1.5 rounded-lg text-canvas-muted/60 hover:text-canvas-ink transition-colors"
               >
                 <X size={14} />
@@ -76,7 +56,7 @@ export default function Header() {
             </div>
           ) : (
             <button
-              onClick={() => setBatchMode(true)}
+              onClick={onEnterBatch}
               className="flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs text-canvas-muted/70 border border-canvas-mid/40 bg-canvas-warm/40 hover:bg-canvas-warm/60 hover:text-canvas-muted hover:border-canvas-muted/40 transition-all"
             >
               <CheckSquare size={12} /> <span className="hidden md:inline">批量操作</span>
@@ -98,29 +78,6 @@ export default function Header() {
           )}
         </div>
       </div>
-
-      {batchMode && (
-        <div className="absolute top-[49px] md:top-[53px] left-0 right-0 bottom-0 z-30 pointer-events-none">
-          <div className="absolute inset-0 bg-canvas/80 luminous-overlay pointer-events-auto overflow-auto">
-            <div className="flex items-start gap-2 md:gap-3 p-2 md:p-3 flex-wrap safe-bottom">
-              {tasks.map((task) => (
-                <button
-                  key={task.id}
-                  onClick={() => handleToggleSelect(task.id)}
-                  className={`flex items-center gap-2 px-3 py-2 md:py-1.5 rounded-xl text-xs transition-all ${
-                    selectedIds.has(task.id)
-                      ? 'bg-red-50 text-red-500 border border-red-200'
-                      : 'bg-white text-canvas-muted border border-canvas-mid/60 hover:border-canvas-muted/50'
-                  }`}
-                >
-                  {selectedIds.has(task.id) ? <CheckSquare size={13} /> : <Square size={13} />}
-                  <span className="truncate max-w-[120px]">{task.title}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       <ConfirmDialog
         open={showBatchConfirm}
