@@ -32,11 +32,9 @@ function saveRemembered(email: string, password: string, remEmail: boolean, remP
   } catch { /* ignore */ }
 }
 
-interface AuthPageProps {
-  onSetPassword?: () => void;
-}
+interface AuthPageProps {}
 
-export default function AuthPage({ onSetPassword }: AuthPageProps) {
+export default function AuthPage(_props: AuthPageProps) {
   const [step, setStep] = useState<Step>('choose');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

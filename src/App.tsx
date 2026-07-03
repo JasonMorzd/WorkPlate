@@ -10,7 +10,13 @@ import TaskGrid from '@/components/TaskGrid';
 import FrostedOverlay from '@/components/FrostedOverlay';
 import { LogOut } from 'lucide-react';
 
-const PW_SKIP_KEY = 'wp_pw_skip';
+const PW_SET_KEY = 'wp_pw_set';
+
+function isNewUser(user: User): boolean {
+  const created = new Date(user.created_at).getTime();
+  const now = Date.now();
+  return now - created < 30_000;
+}
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -22,25 +28,22 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
       setUser(u);
-      if (u) {
-        const skipped = localStorage.getItem(PW_SKIP_KEY);
-        if (!skipped) {
+      setAuthLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+
+      if (event === 'SIGNED_IN' && u) {
+        const alreadySet = localStorage.getItem(PW_SET_KEY);
+        if (!alreadySet && isNewUser(u)) {
           setShowSetPassword(true);
           return;
         }
       }
-      setAuthLoading(false);
-    });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        const skipped = localStorage.getItem(PW_SKIP_KEY);
-        if (!skipped) {
-          setShowSetPassword(true);
-          return;
-        }
+      if (!u) {
         setAuthLoading(false);
       }
     });
@@ -49,7 +52,7 @@ export default function App() {
   }, []);
 
   const handleSetPasswordDone = useCallback(() => {
-    localStorage.setItem(PW_SKIP_KEY, '1');
+    localStorage.setItem(PW_SET_KEY, '1');
     setShowSetPassword(false);
     setAuthLoading(false);
   }, []);
