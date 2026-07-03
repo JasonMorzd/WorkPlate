@@ -1,9 +1,9 @@
-import { X, Pin, PinOff, Trash2, Type, List, Star } from 'lucide-react';
+import { X, Pin, PinOff, Trash2, Type, Table, Star } from 'lucide-react';
 import { useState } from 'react';
 import type { Task, TaskContent } from '@/types';
 import TaskProgress from './TaskProgress';
 import TaskContentText from './TaskContentText';
-import TaskContentForm from './TaskContentForm';
+import TaskContentTable from './TaskContentTable';
 import { useTaskStore } from '@/store/useTaskStore';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -98,14 +98,14 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
               onClick={(e) => {
                 e.stopPropagation();
                 const newContent: TaskContent = task.content.type === 'text'
-                  ? { type: 'form', fields: [] }
+                  ? { type: 'table', headers: ['项目', '内容'], rows: [] }
                   : { type: 'text', text: '' };
                 updateTask(task.id, { content: newContent });
               }}
               className="flex items-center gap-1 text-canvas-muted/50 hover:text-canvas-muted transition-colors md:ml-auto"
             >
-              {task.content.type === 'text' ? <List size={13} /> : <Type size={13} />}
-              <span className="text-xs">{task.content.type === 'text' ? '切换表单' : '切换文本'}</span>
+              {task.content.type === 'text' ? <Table size={13} /> : <Type size={13} />}
+              <span className="text-xs">{task.content.type === 'text' ? '切换表格' : '切换文本'}</span>
             </button>
           </div>
 
@@ -122,9 +122,12 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
                   onChange={(text) => updateTask(task.id, { content: { type: 'text', text } })}
                 />
               ) : (
-                <TaskContentForm
-                  fields={task.content.fields}
-                  onChange={(fields) => updateTask(task.id, { content: { type: 'form', fields } })}
+                <TaskContentTable
+                  headers={task.content.headers}
+                  rows={task.content.rows}
+                  onChange={({ headers, rows }) =>
+                    updateTask(task.id, { content: { type: 'table', headers, rows } })
+                  }
                 />
               )}
             </div>

@@ -1,4 +1,4 @@
-import { List, Star, CheckCircle, Circle } from 'lucide-react';
+import { Table, Star, CheckCircle, Circle } from 'lucide-react';
 import { useMemo } from 'react';
 import { getTaskBackgroundColor } from '@/utils/colorUtils';
 import type { Task } from '@/types';
@@ -18,8 +18,12 @@ function getContentPreview(task: Task): string | null {
     const text = task.content.text.trim();
     return text || null;
   }
-  if (task.content.type === 'form' && task.content.fields.length > 0) {
-    return task.content.fields.map((f) => f.label || '未命名').join(' · ');
+  if (task.content.type === 'table') {
+    const headers = task.content.headers || [];
+    const rows = task.content.rows || [];
+    const cellCount = rows.reduce((sum, r) => sum + r.length, 0);
+    if (headers.length === 0 && cellCount === 0) return null;
+    return `${headers.join(' · ')}  ${rows.length}行`;
   }
   return null;
 }
@@ -89,8 +93,8 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
               </p>
             )}
           </div>
-          {task.content.type === 'form' && (
-            <List size={12} className="text-canvas-muted/40 shrink-0 mt-1" />
+          {task.content.type === 'table' && (
+            <Table size={12} className="text-canvas-muted/40 shrink-0 mt-1" />
           )}
         </div>
 

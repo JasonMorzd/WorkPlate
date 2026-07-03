@@ -10,22 +10,15 @@ export interface Task {
   createdAt: number;
 }
 
-export type TaskContent = TextContent | FormContent;
+export type TaskContent = TextContent | TableContent;
 
 export interface TextContent {
   type: 'text';
   text: string;
 }
 
-export interface FormContent {
-  type: 'form';
-  fields: FormField[];
-}
-
-export interface FormField {
-  id: string;
-  label: string;
-  value: string;
-  type: 'text' | 'textarea' | 'number' | 'select';
-  options?: string[];
+export interface TableContent {
+  type: 'table';
+  headers: string[];
+  rows: string[][];
 }
