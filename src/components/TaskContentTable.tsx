@@ -78,7 +78,7 @@ export default function TaskContentTable({ headers: initialHeaders, rows: initia
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th className="w-8" />
+            <th className="w-8 px-0" />
             {displayHeaders.map((header, ci) => (
               <th key={ci} className="px-1 group min-w-[80px]">
                 <div className="flex items-center gap-0.5">
@@ -91,7 +91,7 @@ export default function TaskContentTable({ headers: initialHeaders, rows: initia
                   />
                   <button
                     onClick={() => removeColumn(ci)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 transition-all shrink-0"
                     title="删除列"
                   >
                     <X size={11} className="text-canvas-muted/30 hover:text-red-400" />
@@ -104,7 +104,7 @@ export default function TaskContentTable({ headers: initialHeaders, rows: initia
         <tbody>
           {displayRows.map((row, ri) => (
             <tr key={ri} className="group">
-              <td className="align-top pt-1.5 pr-1">
+              <td className="align-top pt-1.5 w-8 px-0">
                 <button
                   onClick={() => removeRow(ri)}
                   className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 transition-all"

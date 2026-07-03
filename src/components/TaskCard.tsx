@@ -21,9 +21,10 @@ function getContentPreview(task: Task): string | null {
   if (task.content.type === 'table') {
     const headers = task.content.headers || [];
     const rows = task.content.rows || [];
-    const cellCount = rows.reduce((sum, r) => sum + r.length, 0);
-    if (headers.length === 0 && cellCount === 0) return null;
-    return `${headers.join(' · ')}  ${rows.length}行`;
+    if (headers.length === 0 && rows.length === 0) return null;
+    const line1 = headers.join(' · ') || ' ';
+    const line2 = rows[0]?.join(' · ') || '';
+    return line2 ? `${line1}\n${line2}` : line1;
   }
   return null;
 }
@@ -70,35 +71,38 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
       )}
 
       <div className="relative p-4 flex flex-col h-full">
-        <div className="flex items-start gap-1.5 min-w-0 w-full">
-          <button
-            onClick={(e) => { e.stopPropagation(); toggleImportant(task.id); }}
-            className="shrink-0 p-0.5 rounded transition-colors hover:bg-citrine-50/60 mt-0.5"
-            title={task.isImportant ? '取消重要' : '标记重要'}
-            data-action
-          >
-            <Star
-              size={16}
-              className={task.isImportant ? 'text-citrine-400 fill-citrine-400' : 'text-canvas-muted/20 hover:text-citrine-300'}
-            />
-          </button>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-normal text-canvas-ink truncate tracking-wide">
-              {task.isPinned && <span className="mr-1 opacity-50">◆</span>}
-              {task.title}
-            </h3>
-            {preview && (
-              <p className="text-xs text-canvas-muted/50 leading-relaxed mt-1 line-clamp-2">
-                {preview}
-              </p>
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex items-start gap-1.5 min-w-0 w-full">
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleImportant(task.id); }}
+              className="shrink-0 p-0.5 rounded transition-colors hover:bg-citrine-50/60 mt-0.5"
+              title={task.isImportant ? '取消重要' : '标记重要'}
+              data-action
+            >
+              <Star
+                size={16}
+                className={task.isImportant ? 'text-citrine-400 fill-citrine-400' : 'text-canvas-muted/20 hover:text-citrine-300'}
+              />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-normal text-canvas-ink truncate tracking-wide">
+                {task.isPinned && <span className="mr-1 opacity-50">◆</span>}
+                {task.title}
+              </h3>
+            </div>
+            {task.content.type === 'table' && (
+              <Table size={12} className="text-canvas-muted/40 shrink-0 mt-1" />
             )}
           </div>
-          {task.content.type === 'table' && (
-            <Table size={12} className="text-canvas-muted/40 shrink-0 mt-1" />
+
+          {preview && (
+            <p className="text-xs text-canvas-muted/55 leading-relaxed mt-2 whitespace-pre-line overflow-hidden line-clamp-4">
+              {preview}
+            </p>
           )}
         </div>
 
-        <div className="mt-auto pt-2">
+        <div className="shrink-0 pt-3">
           {task.progress >= 0 && task.progress <= 100 && (
             <div className="h-[4px] bg-canvas-mid/30 rounded-full overflow-hidden">
               <div
@@ -111,7 +115,7 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
               />
             </div>
           )}
-          <div className="text-xs text-canvas-muted/60 tracking-wide mt-1.5">
+          <div className="text-[10px] text-canvas-muted/50 tracking-wide mt-1.5">
             {task.progress > 0 && task.progress <= 100
               ? `${task.progress}%`
               : task.progress === 101
