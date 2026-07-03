@@ -98,7 +98,7 @@ export default function App() {
   if (authLoading && !showSetPassword) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-canvas">
-        <p className="text-sm text-canvas-muted/40 tracking-wide">加载中...</p>
+        <p className="text-sm text-canvas-muted tracking-wide">加载中...</p>
       </div>
     );
   }
@@ -121,12 +121,12 @@ export default function App() {
       <div className="w-full h-full flex flex-col bg-canvas">
         <div className="flex items-center justify-end px-5 py-3 border-b border-canvas-mid/40 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-canvas-muted/50 tracking-wide">{user.email}</span>
+            <span className="text-sm text-canvas-muted tracking-wide">{user.email}</span>
             <button
               onClick={signOut}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-canvas-muted/50 hover:text-red-400 hover:bg-red-50/50 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm text-canvas-muted hover:text-red-400 hover:bg-red-50/50 transition-colors"
             >
-              <LogOut size={13} /> 退出
+              <LogOut size={15} /> 退出
             </button>
           </div>
         </div>

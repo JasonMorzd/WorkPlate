@@ -28,7 +28,7 @@ export default function TaskContentText({ text, onChange }: TaskContentTextProps
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder="在此输入备注..."
-      className="w-full min-h-[100px] bg-canvas-warm/50 text-sm text-canvas-ink/90 leading-relaxed resize-none outline-none rounded-lg p-3 placeholder:text-canvas-muted/30 tracking-wide"
+      className="w-full min-h-[100px] bg-canvas-warm/50 text-base text-canvas-ink leading-relaxed resize-none outline-none rounded-lg p-3 placeholder:text-canvas-muted/40 tracking-wide"
     />
   );
 }

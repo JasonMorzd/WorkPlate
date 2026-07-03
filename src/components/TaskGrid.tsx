@@ -118,7 +118,7 @@ export default function TaskGrid({ batchMode, selectedIds, onToggleSelect }: Tas
   if (sorted.length === 0 && deletingTaskIds.size === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-sm text-canvas-muted/40 tracking-wide">暂无任务，点击右上角「新建」开始</p>
+        <p className="text-sm text-canvas-muted tracking-wide">暂无任务，点击右上角「新建」开始</p>
       </div>
     );
   }

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 html {
-  font-size: clamp(15px, 1vw, 18px);
+  font-size: clamp(16px, 1.2vw, 22px);
 }
 
 :root {

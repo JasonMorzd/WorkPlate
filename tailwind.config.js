@@ -20,9 +20,9 @@ export default {
         },
         canvas: {
           DEFAULT: '#FBFAF7',
-          warm: '#E9E5DF',
-          mid: '#D5D0C9',
-          muted: '#8B867F',
+          warm: '#E0DCD6',
+          mid: '#C5C0B9',
+          muted: '#68635C',
           ink: '#3E3A36',
         },
       },

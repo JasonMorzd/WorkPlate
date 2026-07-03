@@ -61,18 +61,18 @@ export default function TaskContentTable({ headers: initialHeaders, rows: initia
       <div className="flex items-center gap-1 mb-2">
         <button
           onClick={addColumn}
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded text-sm text-canvas-muted hover:text-citrine-400 transition-colors"
         >
-          <Plus size={11} /> 列
+          <Plus size={13} /> 列
         </button>
         <button
           onClick={addRow}
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded text-sm text-canvas-muted hover:text-citrine-400 transition-colors"
         >
-          <Plus size={11} /> 行
+          <Plus size={13} /> 行
         </button>
         <div className="w-px h-3 bg-canvas-mid/30 mx-1" />
-        <span className="text-[10px] text-canvas-muted/30">{safeCols}列 × {displayRows.length}行</span>
+        <span className="text-xs text-canvas-muted">{safeCols}列 × {displayRows.length}行</span>
       </div>
 
       <table className="w-full border-collapse text-sm">
@@ -87,14 +87,14 @@ export default function TaskContentTable({ headers: initialHeaders, rows: initia
                     onChange={(e) => updateHeader(ci, e.target.value)}
                     onBlur={flush}
                     placeholder="列名"
-                    className="flex-1 min-w-0 bg-canvas-warm/50 text-canvas-ink/80 font-normal text-xs px-2 py-1 rounded outline-none placeholder:text-canvas-muted/30 border border-transparent focus:border-citrine-400 focus:bg-white transition-all"
+                    className="flex-1 min-w-0 bg-canvas-warm/50 text-canvas-ink/80 font-normal text-sm px-2 py-1 rounded outline-none placeholder:text-canvas-muted/40 border border-transparent focus:border-citrine-400 focus:bg-white transition-all"
                   />
                   <button
                     onClick={() => removeColumn(ci)}
                     className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 transition-all shrink-0"
                     title="删除列"
                   >
-                    <X size={11} className="text-canvas-muted/30 hover:text-red-400" />
+                    <X size={13} className="text-canvas-muted/40 hover:text-red-400" />
                   </button>
                 </div>
               </th>
@@ -110,7 +110,7 @@ export default function TaskContentTable({ headers: initialHeaders, rows: initia
                   className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 transition-all"
                   title="删除行"
                 >
-                  <X size={11} className="text-canvas-muted/30 hover:text-red-400" />
+                  <X size={13} className="text-canvas-muted/40 hover:text-red-400" />
                 </button>
               </td>
               {row.map((cell, ci) => (
@@ -120,7 +120,7 @@ export default function TaskContentTable({ headers: initialHeaders, rows: initia
                     onChange={(e) => updateCell(ri, ci, e.target.value)}
                     onBlur={flush}
                     placeholder="..."
-                    className="w-full bg-canvas-warm/40 text-canvas-ink/80 text-sm px-2 py-1.5 rounded outline-none placeholder:text-canvas-muted/20 border border-transparent focus:border-canvas-mid/30 focus:bg-white transition-all"
+                    className="w-full bg-canvas-warm/40 text-canvas-ink text-base px-2 py-1.5 rounded outline-none placeholder:text-canvas-muted/30 border border-transparent focus:border-canvas-mid/30 focus:bg-white transition-all"
                   />
                 </td>
               ))}

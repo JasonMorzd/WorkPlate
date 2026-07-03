@@ -27,7 +27,7 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
             <input
               value={task.title}
               onChange={(e) => updateTask(task.id, { title: e.target.value })}
-              className="flex-1 max-md:text-lg md:text-xl font-normal bg-canvas-warm/40 text-canvas-ink outline-none placeholder:text-canvas-muted/30 tracking-wide rounded-lg px-3 py-2 border border-canvas-mid/30 focus:bg-white focus:border-citrine-400 focus:shadow-sm transition-all"
+              className="flex-1 max-md:text-lg md:text-2xl font-normal bg-canvas-warm/40 text-canvas-ink outline-none placeholder:text-canvas-muted/40 tracking-wide rounded-lg px-3 py-2 border border-canvas-mid/30 focus:bg-white focus:border-citrine-400 focus:shadow-sm transition-all"
               placeholder="输入任务标题..."
               onClick={(e) => e.stopPropagation()}
             />
@@ -35,44 +35,44 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
               <button
                 onClick={(e) => { e.stopPropagation(); toggleImportant(task.id); }}
                 className={`p-1.5 md:p-2 rounded-lg transition-colors ${
-                  task.isImportant ? 'text-citrine-500 bg-citrine-50' : 'text-canvas-muted/35 hover:text-citrine-400 hover:bg-citrine-50/50'
+                  task.isImportant ? 'text-citrine-500 bg-citrine-50' : 'text-canvas-muted/50 hover:text-citrine-400 hover:bg-citrine-50/50'
                 }`}
                 title={task.isImportant ? '取消重要' : '标记重要'}
               >
-                <Star size={15} className={task.isImportant ? 'fill-citrine-500' : ''} />
+                <Star size={18} className={task.isImportant ? 'fill-citrine-500' : ''} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); togglePin(task.id); }}
                 className={`p-1.5 md:p-2 rounded-lg transition-colors ${
-                  task.isPinned ? 'text-citrine-500 bg-citrine-50' : 'text-canvas-muted/35 hover:text-citrine-400 hover:bg-citrine-50/50'
+                  task.isPinned ? 'text-citrine-500 bg-citrine-50' : 'text-canvas-muted/50 hover:text-citrine-400 hover:bg-citrine-50/50'
                 }`}
                 title={task.isPinned ? '取消置顶' : '置顶'}
               >
-                {task.isPinned ? <Pin size={15} /> : <PinOff size={15} />}
+                {task.isPinned ? <Pin size={18} /> : <PinOff size={18} />}
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
-                className="p-1.5 md:p-2 rounded-lg text-canvas-muted/35 hover:text-red-400 hover:bg-red-50/60 transition-colors"
+                className="p-1.5 md:p-2 rounded-lg text-canvas-muted/50 hover:text-red-400 hover:bg-red-50/60 transition-colors"
                 title="删除"
               >
-                <Trash2 size={15} />
+                <Trash2 size={18} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onClose(); }}
-                className="p-1.5 md:p-2 rounded-lg text-canvas-muted/35 hover:text-canvas-muted hover:bg-canvas-warm/60 transition-colors"
+                className="p-1.5 md:p-2 rounded-lg text-canvas-muted/50 hover:text-canvas-ink hover:bg-canvas-warm/60 transition-colors"
                 title="关闭"
               >
-                <X size={15} />
+                <X size={18} />
               </button>
             </div>
           </div>
 
-          <div className="flex items-center max-md:flex-wrap gap-2 md:gap-4 text-sm">
+          <div className="flex items-center max-md:flex-wrap gap-2 md:gap-4">
             <div className="flex items-center gap-1 bg-canvas-warm/60 rounded-lg p-0.5 w-full md:w-auto">
               <button
                 onClick={(e) => { e.stopPropagation(); updateTask(task.id, { progress: 0 }); }}
                 className={`flex-1 md:flex-none px-3 py-2 md:py-1.5 rounded-md text-xs transition-all ${
-                  isProgressMode ? 'bg-white text-canvas-ink shadow-sm' : 'text-canvas-muted/50 hover:text-canvas-muted'
+                  isProgressMode ? 'bg-white text-canvas-ink shadow-sm' : 'text-canvas-muted/60 hover:text-canvas-ink'
                 }`}
               >
                 进度模式
@@ -80,7 +80,7 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
               <button
                 onClick={(e) => { e.stopPropagation(); updateTask(task.id, { progress: -1 }); }}
                 className={`flex-1 md:flex-none px-3 py-2 md:py-1.5 rounded-md text-xs transition-all ${
-                  task.progress === -1 ? 'bg-white text-canvas-ink shadow-sm' : 'text-canvas-muted/50 hover:text-canvas-muted'
+                  task.progress === -1 ? 'bg-white text-canvas-ink shadow-sm' : 'text-canvas-muted/60 hover:text-canvas-ink'
                 }`}
               >
                 长期任务
@@ -88,7 +88,7 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
               <button
                 onClick={(e) => { e.stopPropagation(); updateTask(task.id, { progress: 101 }); }}
                 className={`flex-1 md:flex-none px-3 py-2 md:py-1.5 rounded-md text-xs transition-all ${
-                  task.progress === 101 ? 'bg-citrine-50 text-citrine-500 shadow-sm' : 'text-canvas-muted/50 hover:text-citrine-400'
+                  task.progress === 101 ? 'bg-citrine-50 text-citrine-500 shadow-sm' : 'text-canvas-muted/60 hover:text-citrine-400'
                 }`}
               >
                 已完成
@@ -102,9 +102,9 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
                   : { type: 'text', text: '' };
                 updateTask(task.id, { content: newContent });
               }}
-              className="flex items-center gap-1 text-canvas-muted/50 hover:text-canvas-muted transition-colors md:ml-auto"
+              className="flex items-center gap-1 text-canvas-muted/60 hover:text-canvas-ink transition-colors md:ml-auto"
             >
-              {task.content.type === 'text' ? <Table size={13} /> : <Type size={13} />}
+              {task.content.type === 'text' ? <Table size={14} /> : <Type size={14} />}
               <span className="text-xs">{task.content.type === 'text' ? '切换表格' : '切换文本'}</span>
             </button>
           </div>

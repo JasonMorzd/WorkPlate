@@ -65,7 +65,7 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
           {isSelected ? (
             <CheckCircle size={20} className="text-red-400 fill-red-400 drop-shadow-sm" />
           ) : (
-            <Circle size={20} className="text-canvas-muted/30" />
+            <Circle size={20} className="text-canvas-muted/40" />
           )}
         </div>
       )}
@@ -80,23 +80,23 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
               data-action
             >
               <Star
-                size={16}
-                className={task.isImportant ? 'text-citrine-400 fill-citrine-400' : 'text-canvas-muted/20 hover:text-citrine-300'}
+                size={18}
+                className={task.isImportant ? 'text-citrine-400 fill-citrine-400' : 'text-canvas-muted/35 hover:text-citrine-300'}
               />
             </button>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-normal text-canvas-ink truncate tracking-wide">
+              <h3 className="text-lg font-normal text-canvas-ink truncate tracking-wide">
                 {task.isPinned && <span className="mr-1 opacity-50">◆</span>}
                 {task.title}
               </h3>
             </div>
             {task.content.type === 'table' && (
-              <Table size={12} className="text-canvas-muted/40 shrink-0 mt-1" />
+              <Table size={14} className="text-canvas-muted/50 shrink-0 mt-1" />
             )}
           </div>
 
           {preview && (
-            <p className="text-xs text-canvas-muted/55 leading-relaxed mt-2 whitespace-pre-line overflow-hidden line-clamp-4">
+            <p className="text-sm text-canvas-muted leading-relaxed mt-2 whitespace-pre-line overflow-hidden line-clamp-4">
               {preview}
             </p>
           )}
@@ -104,18 +104,18 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
 
         <div className="shrink-0 pt-3">
           {task.progress >= 0 && task.progress <= 100 && (
-            <div className="h-[4px] bg-canvas-mid/30 rounded-full overflow-hidden">
+            <div className="h-[4px] bg-canvas-mid/40 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full"
                 style={{
                   width: `${task.progress}%`,
-                  backgroundColor: task.progress >= 80 ? '#C8A32F' : '#D5D0C9',
+                  backgroundColor: task.progress >= 80 ? '#C8A32F' : '#B0A9A0',
                   transition: 'width 0.15s ease-out, background-color 0.3s ease-out',
                 }}
               />
             </div>
           )}
-          <div className="text-[10px] text-canvas-muted/50 tracking-wide mt-1.5">
+          <div className="text-xs text-canvas-muted tracking-wide mt-1.5">
             {task.progress > 0 && task.progress <= 100
               ? `${task.progress}%`
               : task.progress === 101
