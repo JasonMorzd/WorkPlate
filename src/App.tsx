@@ -1,47 +1,73 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { AuthContext } from '@/lib/auth';
 import { useTaskStore } from '@/store/useTaskStore';
 import AuthPage from '@/components/AuthPage';
+import SetPasswordPage from '@/components/SetPasswordPage';
 import Header from '@/components/Header';
 import TaskGrid from '@/components/TaskGrid';
 import FrostedOverlay from '@/components/FrostedOverlay';
 import { LogOut } from 'lucide-react';
 
+const PW_SKIP_KEY = 'wp_pw_skip';
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showSetPassword, setShowSetPassword] = useState(false);
   const { loadTasks, subscribeToChanges } = useTaskStore();
-  const loading = useTaskStore((s) => s.loading);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        const skipped = localStorage.getItem(PW_SKIP_KEY);
+        if (!skipped) {
+          setShowSetPassword(true);
+          return;
+        }
+      }
       setAuthLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        const skipped = localStorage.getItem(PW_SKIP_KEY);
+        if (!skipped) {
+          setShowSetPassword(true);
+          return;
+        }
+        setAuthLoading(false);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  const handleSetPasswordDone = useCallback(() => {
+    localStorage.setItem(PW_SKIP_KEY, '1');
+    setShowSetPassword(false);
+    setAuthLoading(false);
+  }, []);
+
   useEffect(() => {
-    if (user) {
+    if (user && !showSetPassword && !authLoading) {
       loadTasks();
       const unsubscribe = subscribeToChanges();
       return unsubscribe;
     }
-  }, [user]);
+  }, [user, showSetPassword, authLoading]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
     useTaskStore.setState({ tasks: [] });
   };
 
-  if (authLoading) {
+  if (authLoading && !showSetPassword) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-canvas">
         <p className="text-sm text-canvas-muted/40 tracking-wide">加载中...</p>
@@ -51,6 +77,15 @@ export default function App() {
 
   if (!user) {
     return <AuthPage />;
+  }
+
+  if (showSetPassword) {
+    return (
+      <SetPasswordPage
+        email={user.email || ''}
+        onDone={handleSetPasswordDone}
+      />
+    );
   }
 
   return (

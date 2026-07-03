@@ -1,16 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Mail, KeyRound } from 'lucide-react';
+import { Mail, KeyRound, ArrowLeft } from 'lucide-react';
 
-type Mode = 'magic' | 'password' | 'sent';
+type Step = 'choose' | 'magic' | 'password' | 'sent';
 
-export default function AuthPage() {
-  const [mode, setMode] = useState<Mode>('magic');
+const STORAGE_EMAIL = 'wp_remember_email';
+const STORAGE_PASS = 'wp_remember_pass';
+
+function loadRemembered(): { email: string; password: string; rememberEmail: boolean; rememberPass: boolean } {
+  try {
+    const email = localStorage.getItem(STORAGE_EMAIL) || '';
+    const password = localStorage.getItem(STORAGE_PASS) || '';
+    return {
+      email,
+      password,
+      rememberEmail: !!email,
+      rememberPass: !!password,
+    };
+  } catch {
+    return { email: '', password: '', rememberEmail: false, rememberPass: false };
+  }
+}
+
+function saveRemembered(email: string, password: string, remEmail: boolean, remPass: boolean) {
+  try {
+    if (remEmail) localStorage.setItem(STORAGE_EMAIL, email);
+    else localStorage.removeItem(STORAGE_EMAIL);
+
+    if (remPass && remEmail) localStorage.setItem(STORAGE_PASS, password);
+    else localStorage.removeItem(STORAGE_PASS);
+  } catch { /* ignore */ }
+}
+
+interface AuthPageProps {
+  onSetPassword?: () => void;
+}
+
+export default function AuthPage({ onSetPassword }: AuthPageProps) {
+  const [step, setStep] = useState<Step>('choose');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(true);
+  const [rememberPass, setRememberPass] = useState(false);
+
+  useEffect(() => {
+    const remembered = loadRemembered();
+    setEmail(remembered.email);
+    setPassword(remembered.password);
+    setRememberEmail(remembered.rememberEmail);
+    setRememberPass(remembered.rememberPass);
+  }, []);
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,12 +61,10 @@ export default function AuthPage() {
     try {
       const { error: err } = await supabase.auth.signInWithOtp({
         email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
+        options: { emailRedirectTo: window.location.origin },
       });
       if (err) throw err;
-      setMode('sent');
+      setStep('sent');
     } catch (err: any) {
       setError(err.message || '发送失败，请稍后再试');
     } finally {
@@ -39,23 +78,23 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      if (isRegister) {
-        const { error: err } = await supabase.auth.signUp({ email, password });
-        if (err) throw err;
-        setError('注册成功！请返回免密码登录或直接登录。');
-        setIsRegister(false);
-      } else {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-        if (err) throw err;
-      }
+      saveRemembered(email, password, rememberEmail, rememberPass);
+
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) throw err;
     } catch (err: any) {
-      setError(err.message || '操作失败');
+      setError(err.message || '登录失败');
     } finally {
       setLoading(false);
     }
   };
 
-  if (mode === 'sent') {
+  const goBack = () => {
+    setStep('choose');
+    setError('');
+  };
+
+  if (step === 'sent') {
     return (
       <div className="w-full h-full flex items-center justify-center bg-canvas p-4">
         <div className="w-full max-w-sm text-center">
@@ -72,7 +111,7 @@ export default function AuthPage() {
             如未收到请检查垃圾邮件箱。
           </p>
           <button
-            onClick={() => setMode('magic')}
+            onClick={goBack}
             className="mt-8 text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
           >
             更换邮箱
@@ -82,33 +121,78 @@ export default function AuthPage() {
     );
   }
 
+  if (step === 'choose') {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-canvas p-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-normal text-canvas-ink tracking-widest">工作看板</h1>
+            <p className="text-sm text-canvas-muted/60 mt-2 tracking-wide">
+              登录后数据自动云端同步
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => setStep('magic')}
+              className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-canvas-mid/30 hover:border-citrine-400 hover:shadow-sm transition-all text-left group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-citrine-50 flex items-center justify-center shrink-0 group-hover:bg-citrine-100 transition-colors">
+                <Mail size={20} className="text-citrine-500" />
+              </div>
+              <div>
+                <p className="text-sm text-canvas-ink font-medium tracking-wide">免密码登录</p>
+                <p className="text-xs text-canvas-muted/50 mt-0.5">发送邮箱链接，点击即登录</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setStep('password')}
+              className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-canvas-mid/30 hover:border-citrine-400 hover:shadow-sm transition-all text-left group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-canvas-warm/70 flex items-center justify-center shrink-0 group-hover:bg-canvas-warm transition-colors">
+                <KeyRound size={20} className="text-canvas-muted/60" />
+              </div>
+              <div>
+                <p className="text-sm text-canvas-ink font-medium tracking-wide">密码登录</p>
+                <p className="text-xs text-canvas-muted/50 mt-0.5">使用邮箱和密码登录</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-full flex items-center justify-center bg-canvas p-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-normal text-canvas-ink tracking-widest">工作看板</h1>
-          <p className="text-sm text-canvas-muted/60 mt-2 tracking-wide">
-            登录后数据自动云端同步
-          </p>
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={goBack}
+            className="p-1.5 -ml-1.5 rounded-lg hover:bg-canvas-warm/60 transition-colors text-canvas-muted/50 hover:text-canvas-ink"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <span className="text-sm font-medium text-canvas-ink tracking-wide">
+            {step === 'magic' ? '免密码登录' : '密码登录'}
+          </span>
         </div>
 
-        {mode === 'magic' ? (
+        {step === 'magic' ? (
           <form onSubmit={handleMagicLink} className="space-y-4">
-            <div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="输入邮箱地址"
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
-              />
-            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="输入邮箱地址"
+              required
+              autoFocus
+              className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
+            />
 
             {error && (
-              <p className={`text-xs tracking-wide ${error.includes('成功') ? 'text-citrine-500' : 'text-red-400'}`}>
-                {error}
-              </p>
+              <p className="text-xs text-red-400 tracking-wide">{error}</p>
             )}
 
             <button
@@ -121,32 +205,56 @@ export default function AuthPage() {
           </form>
         ) : (
           <form onSubmit={handlePassword} className="space-y-4">
-            <div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="邮箱"
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="密码（6位以上）"
-                required
-                minLength={6}
-                className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
-              />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="邮箱"
+              required
+              autoFocus
+              className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="密码"
+              required
+              minLength={6}
+              className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
+            />
+
+            <div className="flex items-center gap-4 pt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberEmail}
+                  onChange={(e) => {
+                    setRememberEmail(e.target.checked);
+                    if (!e.target.checked) {
+                      setRememberPass(false);
+                      saveRemembered('', '', false, false);
+                    }
+                  }}
+                  className="w-4 h-4 rounded accent-citrine-400"
+                />
+                <span className="text-xs text-canvas-muted/60">记住邮箱</span>
+              </label>
+              {rememberEmail && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberPass}
+                    onChange={(e) => setRememberPass(e.target.checked)}
+                    className="w-4 h-4 rounded accent-citrine-400"
+                  />
+                  <span className="text-xs text-canvas-muted/60">记住密码</span>
+                </label>
+              )}
             </div>
 
             {error && (
-              <p className={`text-xs tracking-wide ${error.includes('成功') ? 'text-citrine-500' : 'text-red-400'}`}>
-                {error}
-              </p>
+              <p className="text-xs text-red-400 tracking-wide">{error}</p>
             )}
 
             <button
@@ -154,42 +262,10 @@ export default function AuthPage() {
               disabled={loading}
               className="w-full py-3 rounded-xl text-sm text-canvas-ink bg-citrine-200/80 hover:bg-citrine-300/80 transition-all duration-300 disabled:opacity-50 tracking-wide"
             >
-              {loading ? '处理中...' : isRegister ? '注册' : '登录'}
+              {loading ? '登录中...' : '登录'}
             </button>
           </form>
         )}
-
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <div className="h-px flex-1 bg-canvas-mid/30" />
-          <span className="text-xs text-canvas-muted/30">或</span>
-          <div className="h-px flex-1 bg-canvas-mid/30" />
-        </div>
-
-        <p className="text-center mt-4 text-xs text-canvas-muted/50">
-          {mode === 'magic' ? (
-            <button
-              onClick={() => setMode('password')}
-              className="flex items-center gap-1 mx-auto hover:text-citrine-400 transition-colors"
-            >
-              <KeyRound size={12} /> 使用密码登录
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => { setMode('magic'); setError(''); }}
-                className="flex items-center gap-1 mx-auto hover:text-citrine-400 transition-colors"
-              >
-                <Mail size={12} /> 免密码登录
-              </button>
-              <button
-                onClick={() => { setIsRegister(!isRegister); setError(''); }}
-                className="mt-3 block mx-auto text-canvas-muted/50 hover:text-citrine-400 transition-colors"
-              >
-                {isRegister ? '已有账号？去登录' : '没有账号？去注册'}
-              </button>
-            </>
-          )}
-        </p>
       </div>
     </div>
   );
