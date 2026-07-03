@@ -211,11 +211,30 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   subscribeToChanges: () => {
+    let syncing = false;
+
+    const delayReload = () => {
+      syncing = true;
+      setTimeout(() => {
+        syncing = false;
+        get().loadTasks();
+      }, 1200);
+    };
+
     const channel = supabase
       .channel('tasks-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
-        get().loadTasks();
-      })
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'tasks' },
+        () => { if (!syncing) get().loadTasks(); }
+      )
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'tasks' },
+        () => { if (!syncing) get().loadTasks(); }
+      )
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tasks' },
+        () => { delayReload(); }
+      )
       .subscribe();
 
     return () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Plus, X } from 'lucide-react';
 
 interface TaskContentTableProps {
@@ -7,24 +7,22 @@ interface TaskContentTableProps {
   onChange?: (data: { headers: string[]; rows: string[][] }) => void;
 }
 
-export default function TaskContentTable({ headers, rows, onChange }: TaskContentTableProps) {
-  const [localHeaders, setLocalHeaders] = useState<string[]>(headers);
-  const [localRows, setLocalRows] = useState<string[][]>(rows);
+export default function TaskContentTable({ headers: initialHeaders, rows: initialRows, onChange }: TaskContentTableProps) {
+  const [localHeaders, setLocalHeaders] = useState<string[]>(initialHeaders);
+  const [localRows, setLocalRows] = useState<string[][]>(initialRows);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-
-  useEffect(() => {
-    setLocalHeaders(headers);
-    setLocalRows(rows);
-  }, [headers, rows]);
 
   const flush = useCallback(() => {
     onChangeRef.current?.({ headers: localHeaders, rows: localRows });
   }, [localHeaders, localRows]);
 
   const addColumn = useCallback(() => {
-    setLocalHeaders((h) => [...h, `列${h.length + 1}`]);
-    setLocalRows((r) => r.map((row) => [...row, '']));
+    setLocalHeaders((h) => {
+      const next = [...h, `列${h.length + 1}`];
+      setLocalRows((r) => r.map((row) => [...row, '']));
+      return next;
+    });
   }, []);
 
   const removeColumn = useCallback((colIdx: number) => {
@@ -33,8 +31,7 @@ export default function TaskContentTable({ headers, rows, onChange }: TaskConten
   }, []);
 
   const addRow = useCallback(() => {
-    const emptyRow = new Array(localHeaders.length).fill('');
-    setLocalRows((r) => [...r, emptyRow]);
+    setLocalRows((r) => [...r, new Array(localHeaders.length).fill('')]);
   }, [localHeaders.length]);
 
   const removeRow = useCallback((rowIdx: number) => {

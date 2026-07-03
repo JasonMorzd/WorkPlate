@@ -123,6 +123,7 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
                 />
               ) : (
                 <TaskContentTable
+                  key={task.id}
                   headers={task.content.headers}
                   rows={task.content.rows}
                   onChange={({ headers, rows }) =>
