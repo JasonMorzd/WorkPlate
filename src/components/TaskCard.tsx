@@ -56,7 +56,7 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
       <div className="card-frosted-overlay" />
 
       {batchMode && (
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-3 right-3 z-10">
           {isSelected ? (
             <CheckCircle size={20} className="text-red-400 fill-red-400 drop-shadow-sm" />
           ) : (
