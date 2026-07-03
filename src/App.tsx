@@ -8,7 +8,6 @@ import SetPasswordPage from '@/components/SetPasswordPage';
 import Header from '@/components/Header';
 import TaskGrid from '@/components/TaskGrid';
 import FrostedOverlay from '@/components/FrostedOverlay';
-import { LogOut } from 'lucide-react';
 
 const PW_SET_KEY = 'wp_pw_set';
 
@@ -119,23 +118,14 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, loading: authLoading, signOut }}>
       <div className="w-full h-full flex flex-col bg-canvas">
-        <div className="flex items-center justify-end px-5 py-3 border-b border-canvas-mid/40 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-canvas-muted tracking-wide">{user.email}</span>
-            <button
-              onClick={signOut}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm text-canvas-muted hover:text-red-400 hover:bg-red-50/50 transition-colors"
-            >
-              <LogOut size={15} /> 退出
-            </button>
-          </div>
-        </div>
         <Header
           batchMode={batchMode}
           selectedIds={selectedIds}
           onEnterBatch={() => setBatchMode(true)}
           onSelectAll={handleSelectAll}
           onCancelBatch={handleCancelBatch}
+          email={user.email || ''}
+          onSignOut={signOut}
         />
         <TaskGrid
           batchMode={batchMode}
