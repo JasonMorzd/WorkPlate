@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { AuthContext } from '@/lib/auth';
@@ -9,6 +9,10 @@ import Header from '@/components/Header';
 import TaskGrid from '@/components/TaskGrid';
 import FrostedOverlay from '@/components/FrostedOverlay';
 
+function pwKey(uid: string) {
+  return `wp_pw_set_${uid}`;
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -18,9 +22,8 @@ export default function App() {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  function pwKey(uid: string) {
-    return `wp_pw_set_${uid}`;
-  }
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -40,12 +43,21 @@ export default function App() {
       const u = session?.user ?? null;
       setUser(u);
 
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && u) {
+      if (event === 'USER_UPDATED' && u) {
+        localStorage.setItem(pwKey(u.id), '1');
+        setShowSetPassword(false);
+        setAuthLoading(false);
+        return;
+      }
+
+      if ((event === 'SIGNED_IN') && u) {
         const alreadySet = localStorage.getItem(pwKey(u.id));
         if (!alreadySet) {
           setShowSetPassword(true);
           return;
         }
+        setAuthLoading(false);
+        return;
       }
 
       if (!u) {
@@ -57,12 +69,13 @@ export default function App() {
   }, []);
 
   const handleSetPasswordDone = useCallback(() => {
-    if (user) {
-      localStorage.setItem(pwKey(user.id), '1');
+    const currentUser = userRef.current;
+    if (currentUser) {
+      localStorage.setItem(pwKey(currentUser.id), '1');
     }
     setShowSetPassword(false);
     setAuthLoading(false);
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (user && !showSetPassword && !authLoading) {
