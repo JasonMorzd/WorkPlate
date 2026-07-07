@@ -60,9 +60,9 @@ export default function SetPasswordPage({ email, onDone }: SetPasswordPageProps)
           </div>
           <h1 className="text-xl font-normal text-canvas-ink tracking-widest mb-2">设置登录密码</h1>
           <p className="text-sm text-canvas-muted/60 tracking-wide leading-relaxed">
-            为 <span className="text-canvas-ink font-medium">{email}</span> 设置密码，<br />
-            以后可直接用密码登录，无需等待邮件
+            为 <span className="text-canvas-ink font-medium">{email}</span> 设置密码
           </p>
+          <p className="text-xs text-canvas-muted/40 mt-1 tracking-wide">为了双端的数据同步，请设置密码</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -89,21 +89,6 @@ export default function SetPasswordPage({ email, onDone }: SetPasswordPageProps)
             {loading ? '设置中...' : '设置密码'}
           </button>
         </form>
-
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <div className="h-px flex-1 bg-canvas-mid/30" />
-          <span className="text-xs text-canvas-muted/30">或</span>
-          <div className="h-px flex-1 bg-canvas-mid/30" />
-        </div>
-
-        <p className="text-center mt-4">
-          <button
-            onClick={onDone}
-            className="text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
-          >
-            暂不设置，直接进入
-          </button>
-        </p>
       </div>
     </div>
   );

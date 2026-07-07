@@ -9,14 +9,6 @@ import Header from '@/components/Header';
 import TaskGrid from '@/components/TaskGrid';
 import FrostedOverlay from '@/components/FrostedOverlay';
 
-const PW_SET_KEY = 'wp_pw_set';
-
-function isNewUser(user: User): boolean {
-  const created = new Date(user.created_at).getTime();
-  const now = Date.now();
-  return now - created < 30_000;
-}
-
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -26,10 +18,21 @@ export default function App() {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  function pwKey(uid: string) {
+    return `wp_pw_set_${uid}`;
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
       setUser(u);
+      if (u) {
+        const alreadySet = localStorage.getItem(pwKey(u.id));
+        if (!alreadySet) {
+          setShowSetPassword(true);
+          return;
+        }
+      }
       setAuthLoading(false);
     });
 
@@ -37,9 +40,9 @@ export default function App() {
       const u = session?.user ?? null;
       setUser(u);
 
-      if (event === 'SIGNED_IN' && u) {
-        const alreadySet = localStorage.getItem(PW_SET_KEY);
-        if (!alreadySet && isNewUser(u)) {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && u) {
+        const alreadySet = localStorage.getItem(pwKey(u.id));
+        if (!alreadySet) {
           setShowSetPassword(true);
           return;
         }
@@ -54,10 +57,12 @@ export default function App() {
   }, []);
 
   const handleSetPasswordDone = useCallback(() => {
-    localStorage.setItem(PW_SET_KEY, '1');
+    if (user) {
+      localStorage.setItem(pwKey(user.id), '1');
+    }
     setShowSetPassword(false);
     setAuthLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (user && !showSetPassword && !authLoading) {
