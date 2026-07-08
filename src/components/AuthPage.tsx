@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Mail, KeyRound, ArrowLeft } from 'lucide-react';
 
-type Step = 'choose' | 'magic' | 'password' | 'sent';
+type Step = 'choose' | 'magic' | 'password' | 'sent' | 'register' | 'forgot' | 'forgotSent';
 
 const STORAGE_EMAIL = 'wp_remember_email';
 const STORAGE_PASS = 'wp_remember_pass';
@@ -87,6 +87,46 @@ export default function AuthPage(_props: AuthPageProps) {
     }
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      saveRemembered(email, password, rememberEmail, rememberPass);
+
+      const { error: err } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (err) throw err;
+      setStep('sent');
+    } catch (err: any) {
+      setError(err.message || '注册失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (err) throw err;
+      setStep('forgotSent');
+    } catch (err: any) {
+      setError(err.message || '发送失败，请稍后再试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const goBack = () => {
     setStep('choose');
     setError('');
@@ -105,7 +145,7 @@ export default function AuthPage(_props: AuthPageProps) {
           </p>
           <p className="text-sm text-canvas-ink font-medium tracking-wide mb-6">{email}</p>
           <p className="text-xs text-canvas-muted/40 tracking-wide leading-relaxed">
-            点击邮件中的按钮即可登录，链接 60 分钟内有效。<br />
+            点击邮件中的按钮即可，链接 60 分钟内有效。<br />
             如未收到请检查垃圾邮件箱。
           </p>
           <button
@@ -113,6 +153,34 @@ export default function AuthPage(_props: AuthPageProps) {
             className="mt-8 text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
           >
             更换邮箱
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'forgotSent') {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-canvas p-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-citrine-50 flex items-center justify-center">
+            <KeyRound size={28} className="text-citrine-400" />
+          </div>
+          <h1 className="text-2xl font-normal text-canvas-ink tracking-widest mb-3">邮件已发送</h1>
+          <p className="text-sm text-canvas-muted/60 tracking-wide leading-relaxed mb-1">
+            密码重置链接已发送至
+          </p>
+          <p className="text-sm text-canvas-ink font-medium tracking-wide mb-6">{email}</p>
+          <p className="text-xs text-canvas-muted/40 tracking-wide leading-relaxed">
+            点击邮件中的按钮即可设置新密码。<br />
+            如未设置过密码，直接设置即可。<br />
+            如未收到请检查垃圾邮件箱。
+          </p>
+          <button
+            onClick={goBack}
+            className="mt-8 text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+          >
+            返回
           </button>
         </div>
       </div>
@@ -173,7 +241,7 @@ export default function AuthPage(_props: AuthPageProps) {
             <ArrowLeft size={18} />
           </button>
           <span className="text-sm font-medium text-canvas-ink tracking-wide">
-            {step === 'magic' ? '免密码登录' : '密码登录'}
+            {step === 'magic' ? '免密码登录' : step === 'register' ? '注册账号' : step === 'forgot' ? '重置密码' : '密码登录'}
           </span>
         </div>
 
@@ -200,6 +268,90 @@ export default function AuthPage(_props: AuthPageProps) {
             >
               {loading ? '发送中...' : '发送登录链接'}
             </button>
+          </form>
+        ) : step === 'forgot' ? (
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="输入邮箱地址"
+              required
+              autoFocus
+              className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
+            />
+
+            <p className="text-xs text-canvas-muted/40 tracking-wide">
+              未设置过密码的用户将直接添加密码，已设置的将重置密码
+            </p>
+
+            {error && (
+              <p className="text-xs text-red-400 tracking-wide">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl text-sm text-canvas-ink bg-citrine-200/80 hover:bg-citrine-300/80 transition-all duration-300 disabled:opacity-50 tracking-wide"
+            >
+              {loading ? '发送中...' : '发送重置邮件'}
+            </button>
+
+            <p className="text-center">
+              <button
+                type="button"
+                onClick={() => setStep('password')}
+                className="text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+              >
+                返回登录
+              </button>
+            </p>
+          </form>
+        ) : step === 'register' ? (
+          <form onSubmit={handleRegister} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="邮箱"
+              required
+              autoFocus
+              className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="设置密码（6位以上）"
+              required
+              minLength={6}
+              className="w-full px-4 py-3 rounded-xl bg-white text-canvas-ink text-sm outline-none border border-canvas-mid/40 focus:border-citrine-400 transition-colors placeholder:text-canvas-muted/30 tracking-wide"
+            />
+            <p className="text-xs text-canvas-muted/40 tracking-wide">
+              注册后数据自动云端同步，双端互通
+            </p>
+
+            {error && (
+              <p className="text-xs text-red-400 tracking-wide">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl text-sm text-canvas-ink bg-citrine-200/80 hover:bg-citrine-300/80 transition-all duration-300 disabled:opacity-50 tracking-wide"
+            >
+              {loading ? '注册中...' : '注册'}
+            </button>
+
+            <p className="text-center">
+              <button
+                type="button"
+                onClick={() => setStep('password')}
+                className="text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+              >
+                已有账号？去登录
+              </button>
+            </p>
           </form>
         ) : (
           <form onSubmit={handlePassword} className="space-y-4">
@@ -262,6 +414,23 @@ export default function AuthPage(_props: AuthPageProps) {
             >
               {loading ? '登录中...' : '登录'}
             </button>
+
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setStep('register')}
+                className="text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+              >
+                注册账号
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep('forgot')}
+                className="text-xs text-canvas-muted/50 hover:text-citrine-400 transition-colors"
+              >
+                修改密码
+              </button>
+            </div>
           </form>
         )}
       </div>
