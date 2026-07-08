@@ -1,6 +1,7 @@
 import { useTaskStore } from '@/store/useTaskStore';
 import { sortTasks } from '@/utils/layoutUtils';
 import TaskCard from './TaskCard';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface GridItem {
   id: string;
@@ -156,14 +157,16 @@ export default function TaskGrid({ batchMode, selectedIds, onToggleSelect }: Tas
                 transition: isDeleting ? 'none' : 'grid-column 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), grid-row 0.6s cubic-bezier(0.22, 0.61, 0.36, 1)',
               }}
             >
-              <TaskCard
-                task={task}
-                isDeleting={isDeleting}
-                batchMode={batchMode}
-                isSelected={isSelected}
-                onClick={() => setExpandedTask(task.id)}
-                onToggleSelect={() => onToggleSelect(task.id)}
-              />
+              <ErrorBoundary fallback={null}>
+                <TaskCard
+                  task={task}
+                  isDeleting={isDeleting}
+                  batchMode={batchMode}
+                  isSelected={isSelected}
+                  onClick={() => setExpandedTask(task.id)}
+                  onToggleSelect={() => onToggleSelect(task.id)}
+                />
+              </ErrorBoundary>
             </div>
           );
         })}

@@ -14,19 +14,25 @@ interface TaskCardProps {
 }
 
 function getContentPreview(task: Task): string | null {
-  if (task.content.type === 'text') {
-    const text = task.content.text.trim();
-    return text || null;
+  try {
+    const content = task.content;
+    if (!content || typeof content !== 'object') return null;
+    if (content.type === 'text') {
+      const text = (content.text || '').trim();
+      return text || null;
+    }
+    if (content.type === 'table') {
+      const headers = content.headers || [];
+      const rows = content.rows || [];
+      if (headers.length === 0 && rows.length === 0) return null;
+      const line1 = headers.join(' · ') || ' ';
+      const line2 = rows[0]?.join(' · ') || '';
+      return line2 ? `${line1}\n${line2}` : line1;
+    }
+    return null;
+  } catch {
+    return null;
   }
-  if (task.content.type === 'table') {
-    const headers = task.content.headers || [];
-    const rows = task.content.rows || [];
-    if (headers.length === 0 && rows.length === 0) return null;
-    const line1 = headers.join(' · ') || ' ';
-    const line2 = rows[0]?.join(' · ') || '';
-    return line2 ? `${line1}\n${line2}` : line1;
-  }
-  return null;
 }
 
 export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelected, onToggleSelect }: TaskCardProps) {
@@ -90,7 +96,7 @@ export default function TaskCard({ task, onClick, isDeleting, batchMode, isSelec
                 {task.title}
               </h3>
             </div>
-            {task.content.type === 'table' && (
+            {task.content && typeof task.content === 'object' && (task.content as any).type === 'table' && (
               <Table size={14} className="text-canvas-muted/50 shrink-0 mt-1" />
             )}
           </div>

@@ -16,6 +16,8 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
   const { updateTask, markTaskDeleting, togglePin, toggleImportant } = useTaskStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const content = task.content && typeof task.content === 'object' ? task.content : { type: 'text' as const, text: '' };
+
   const isProgressMode = task.progress >= 0 && task.progress <= 100;
 
   return (
@@ -97,15 +99,15 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                const newContent: TaskContent = task.content.type === 'text'
+                const newContent: TaskContent = content.type === 'text'
                   ? { type: 'table', headers: ['项目', '内容'], rows: [] }
                   : { type: 'text', text: '' };
                 updateTask(task.id, { content: newContent });
               }}
               className="flex items-center gap-1 text-canvas-muted/60 hover:text-canvas-ink transition-colors md:ml-auto"
             >
-              {task.content.type === 'text' ? <Table size={14} /> : <Type size={14} />}
-              <span className="text-xs">{task.content.type === 'text' ? '切换表格' : '切换文本'}</span>
+              {content.type === 'text' ? <Table size={14} /> : <Type size={14} />}
+              <span className="text-xs">{content.type === 'text' ? '切换表格' : '切换文本'}</span>
             </button>
           </div>
 
@@ -116,16 +118,16 @@ export default function TaskCardDetail({ task, onClose }: TaskCardDetailProps) {
               onChange={(progress) => updateTask(task.id, { progress })}
             />
             <div className="pt-1">
-              {task.content.type === 'text' ? (
+              {content.type === 'text' ? (
                 <TaskContentText
-                  text={task.content.text}
+                  text={content.type === 'text' ? content.text : ''}
                   onChange={(text) => updateTask(task.id, { content: { type: 'text', text } })}
                 />
               ) : (
                 <TaskContentTable
                   key={task.id}
-                  headers={task.content.headers}
-                  rows={task.content.rows}
+                  headers={content.type === 'table' ? content.headers : []}
+                  rows={content.type === 'table' ? content.rows : []}
                   onChange={({ headers, rows }) =>
                     updateTask(task.id, { content: { type: 'table', headers, rows } })
                   }

@@ -1,5 +1,6 @@
 import { useTaskStore } from '@/store/useTaskStore';
 import TaskCardDetail from './TaskCardDetail';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface FrostedOverlayProps {
   batchMode?: boolean;
@@ -23,7 +24,9 @@ export default function FrostedOverlay({ batchMode }: FrostedOverlayProps) {
         className="relative z-10 max-md:w-full md:animate-in animate-slide-up max-md:rounded-t-2xl max-md:overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <TaskCardDetail task={task} onClose={() => setExpandedTask(null)} />
+        <ErrorBoundary fallback={null}>
+          <TaskCardDetail task={task} onClose={() => setExpandedTask(null)} />
+        </ErrorBoundary>
       </div>
     </div>
   );
