@@ -51,6 +51,12 @@ export default function App() {
       }
 
       if ((event === 'SIGNED_IN') && u) {
+        if (sessionStorage.getItem('wp_pw_login') === u.email) {
+          sessionStorage.removeItem('wp_pw_login');
+          localStorage.setItem(pwKey(u.id), '1');
+          setAuthLoading(false);
+          return;
+        }
         const alreadySet = localStorage.getItem(pwKey(u.id));
         if (!alreadySet) {
           setShowSetPassword(true);

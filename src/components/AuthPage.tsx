@@ -78,12 +78,11 @@ export default function AuthPage(_props: AuthPageProps) {
     try {
       saveRemembered(email, password, rememberEmail, rememberPass);
 
-      const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
+      sessionStorage.setItem('wp_pw_login', email);
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) throw err;
-      if (data?.user) {
-        localStorage.setItem(`wp_pw_set_${data.user.id}`, '1');
-      }
     } catch (err: any) {
+      sessionStorage.removeItem('wp_pw_login');
       setError(err.message || '登录失败');
     } finally {
       setLoading(false);
