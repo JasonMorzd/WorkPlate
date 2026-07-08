@@ -51,12 +51,6 @@ export default function App() {
       }
 
       if ((event === 'SIGNED_IN') && u) {
-        if (sessionStorage.getItem('wp_just_registered')) {
-          sessionStorage.removeItem('wp_just_registered');
-          localStorage.setItem(pwKey(u.id), '1');
-          setAuthLoading(false);
-          return;
-        }
         const alreadySet = localStorage.getItem(pwKey(u.id));
         if (!alreadySet) {
           setShowSetPassword(true);

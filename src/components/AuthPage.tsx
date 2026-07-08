@@ -102,7 +102,7 @@ export default function AuthPage(_props: AuthPageProps) {
       });
       if (err) throw err;
       if (data?.user) {
-        sessionStorage.setItem('wp_just_registered', '1');
+        localStorage.setItem(`wp_pw_set_${data.user.id}`, '1');
       }
       setStep('sent');
     } catch (err: any) {
