@@ -95,12 +95,15 @@ export default function AuthPage(_props: AuthPageProps) {
     try {
       saveRemembered(email, password, rememberEmail, rememberPass);
 
-      const { error: err } = await supabase.auth.signUp({
+      const { data, error: err } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: window.location.origin },
       });
       if (err) throw err;
+      if (data?.user) {
+        sessionStorage.setItem('wp_just_registered', '1');
+      }
       setStep('sent');
     } catch (err: any) {
       setError(err.message || '注册失败');
