@@ -12,7 +12,7 @@ const pendingSync = new Map<string, PendingUpdate>();
 let dirtyUntil = 0;
 
 function markDirty() {
-  dirtyUntil = Date.now() + 3000;
+  dirtyUntil = Date.now() + 5000;
 }
 
 function debounceSync(id: string, fields: Record<string, any>) {
@@ -137,7 +137,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       );
       const updated = tasks.find((t) => t.id === id);
       if (updated) {
-        supabase.from('tasks').update({ is_important: updated.isImportant }).eq('id', id);
+        debounceSync(id, { is_important: updated.isImportant });
       }
       return { tasks };
     });
@@ -203,7 +203,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       );
       const updated = tasks.find((t) => t.id === id);
       if (updated) {
-        supabase.from('tasks').update({ is_pinned: updated.isPinned }).eq('id', id);
+        debounceSync(id, { is_pinned: updated.isPinned });
       }
       return { tasks };
     });
